@@ -10687,3 +10687,131 @@ group
 Last modified: 25 December 2024
 This type represents a groupbox control.
 
+First Steps
+Last modified: 25 December 2024
+Now that you’ve covered the essentials, it’s time to start scripting.
+
+Fire up a text editor
+Feel free to use any text editor you prefer: Visual Studio Code, Notepad++, or even a simple Notepad.
+
+Local scripts are located here: <CS2_Directory>/game/csgo/fatality/scripts. You may notice there's also a lib directory, but we’ll get to that later.
+
+Create a new file ending with .lua, and begin your work on the script.
+
+.ljbc format cannot be loaded from local sources.
+
+Writing your first script
+A typical “Hello world!” example can be a bit trivial, so let’s try something slightly more advanced instead.
+
+local function on_present_queue()
+    local d = draw.surface;
+    d.font = draw.fonts['gui_main'];
+    d:add_text(draw.vec2(50, 50),
+        'Hello drawing! My first script speaking.',
+         draw.color.white()
+    );
+end
+
+events.present_queue:add(on_present_queue);
+Now, let's break down this example script:
+
+Defining a callback function
+Most of your scripting will run within several callbacks we provide. Each event has its own signature, so pay attention to the parameters your callback function should accept. present_queue doesn’t provide any parameters, so our function doesn’t need any either.
+
+local function on_present_queue()
+end
+Defining something local is optional, although recommended for clearer scope management.
+
+Accessing drawing layer
+With the callback function defined, let’s actually render something on the screen!
+
+To do this, you first need to access the drawing layer. We provide a single drawing layer that’s safe to use within the game thread. Due to how the game functions internally, it’s strongly discouraged to call game functions in other threads. Luckily all of our events run in the game thread.
+
+This setup allows you not only to draw but also to query information on player health or other entities.
+
+To access the layer, simply reference the surface field in the draw table:
+
+local d = draw.surface;
+You don't have to store it in a variable, but it would be nicer if you don't have to type out draw.surface every time, right?
+
+Setting a font
+After retrieving the layer, you must set a font object before drawing any text on the screen. This is purely for performance reasons, so you don’t have to pass a heavy font object every time you draw text.
+
+All fonts are stored in draw.fonts. To access a font, either use dot syntax, or treat it like a dictionary:
+
+d.font = draw.fonts['gui_main'];
+Drawing text
+With the font set, it’s time to draw some text.
+
+Invoke the add_text method on the layer. Notice that it’s called using the colon syntax: obj:fn(), because it’s a method.
+
+You can also invoke methods with a dot syntax, as long as you provide the object in the first argument. Both calls: obj:fn() and obj.fn(obj) are identical.
+
+d:add_text(draw.vec2(50, 50),
+        'Hello drawing! My first script speaking brev.',
+         draw.color.white()
+    );
+Registering a callback
+Now that you’ve created your first callback, you need to register it so Fatality knows to invoke it. This is done by calling the add method on events.present_queue.
+
+events.present_queue:add(on_present_queue);
+Result
+That's it! If you've done everything correctly, you should see something like this:
+
+Adding UI
+Last modified: 25 December 2024
+Now that you know the basics, let’s extend our script by allowing the user to toggle the text. We can do this by adding a control to the menu.
+
+Creating a control
+Let’s start by creating a simple checkbox:
+
+local cb = gui.checkbox(gui.control_id('my_checkbox'));
+Each control has a unique ID, which the UI framework uses to distinguish controls within containers. It’s very important that your control’s ID doesn’t conflict with others, as that could result in a broken state or worse.
+
+To create the ID, call gui.control_id and pass the desired ID.
+
+Then, create the checkbox by calling gui.checkbox and passing the ID structure you've created.
+
+Constructing the row
+UBy default, controls are typically placed in rows - layouts that stack elements in a specific manner. We provide a simple helper function - gui.make_control.
+
+local row = gui.make_control('My checkbox', cb);
+Adding the row to a group
+With the control and row ready, let’s add them to a group.
+
+To view group and control IDs, you can enable Debug mode in the SCRIPTS tab.
+
+In this example, we'll use the lua>elements a group. First, locate that group in the global context:
+
+local group = gui.ctx:find('lua>elements a');
+Then call its add method to include your row:
+
+group:add(row);
+That's it!
+
+Using the value
+Next, let’s modify our previous script so the text only appears if the checkbox is checked. Wrap your drawing code in an if statement before rendering the text:
+
+if cb:get_value():get() then
+and close it after.
+
+The final script should look something like this:
+
+local cb = gui.checkbox(gui.control_id('my_checkbox'));
+local row = gui.make_control('My checkbox', cb);
+local group = gui.ctx:find('lua>elements a');
+group:add(row);
+
+local function on_present_queue()
+    if cb:get_value():get() then
+        local d = draw.surface;
+        d.font = draw.fonts['gui_main'];
+        d:add_text(draw.vec2(50, 50),
+            'Hello drawing! My first script speaking.',
+            draw.color.white()
+        );
+    end
+end
+
+events.present_queue:add(on_present_queue);
+
